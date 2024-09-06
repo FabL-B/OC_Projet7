@@ -1,9 +1,10 @@
 import csv
 import time
 from itertools import combinations
+import tracemalloc
 
 BUDGET = 500
-FILE_PATH = "data/actions_test.csv"
+FILE_PATH = "data/actions.csv"
 
 
 def load_database(file_path=FILE_PATH):
@@ -79,28 +80,49 @@ def bruteforce_investment_itertools(actions_list, budget=BUDGET):
     print(f"Profit: {max_profit:.2f}€")
 
 
-# Load datas.
-actions_list = load_database()
 
+if __name__ == "__main__":
+    
+    # Start measuring memory usage
+    tracemalloc.start()
 
-# Bruteforce without itertols.
-start_time = time.time()
-actions_combinations = generate_combinations(actions_list)
-bruteforce_investment(actions_combinations)
-end_time = time.time()
-print(f"Temps d'exécution sans itertools: {end_time - start_time:.4f} secondes\n")
+    # Load data
+    actions_list = load_database()
 
-# Bruteforce with itertools.
-start_time = time.time()
-bruteforce_investment_itertools(actions_list)
-end_time = time.time()
-print(f"Temps d'exécution avec itertools: {end_time - start_time:.4f} secondes")
+    # Mesure pour la méthode sans itertools
+    print("== Méthode sans itertools ==")
+    
+    start_time = time.time()
 
+    actions_combinations = generate_combinations(actions_list)
+    bruteforce_investment(actions_combinations)
 
-# Méthode sans itertools (génération manuelle):
-# Complexité temporelle : O((2^n)*k)
-# Complexité spatiale : O(2n)
+    # Stop measuring time
+    end_time = time.time()
+    execution_time = end_time - start_time
 
-# Méthode avec itertools:
-# Complexité temporelle : O((2^n)*k)
-# Complexité spatiale : O(n)
+    # Memory usage
+    current, peak = tracemalloc.get_traced_memory()
+
+    print(f"\nTemps d'exécution sans itertools: {execution_time:.6f} secondes")
+    print(f"Utilisation mémoire: {current / 1024:.6f} KB")
+    print(f"Pic d'utilisation mémoire: {peak / 1024:.6f} KB\n")
+
+    # Mesure pour la méthode avec itertools
+    print("== Méthode avec itertools ==")
+    
+    start_time = time.time()
+
+    bruteforce_investment_itertools(actions_list)
+
+    # Stop measuring time
+    end_time = time.time()
+    execution_time = end_time - start_time
+
+    # Memory usage
+    current, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+
+    print(f"\nTemps d'exécution avec itertools: {execution_time:.6f} secondes")
+    print(f"Utilisation mémoire: {current / 1024:.6f} KB")
+    print(f"Pic d'utilisation mémoire: {peak / 1024:.6f} KB")
