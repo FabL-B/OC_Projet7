@@ -1,9 +1,13 @@
 import csv
 import time
 import tracemalloc
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 
 BUDGET = 500
+# Change FILE_PATH to use another dataset
 FILE_PATH = "data/dataset1.csv"
+memory_usage = []
 
 def read_data_from_csv(file_path):
     """Reads action data from a CSV file and prepares it for processing."""
@@ -24,7 +28,7 @@ def initialize_matrix(budget, num_actions):
     """Initialize the dynamic programming matrix with zeros."""
     return [[0 for _ in range(budget + 1)] for _ in range(num_actions + 1)]
 
-def calculate_optimized_values(data, budget, matrix):
+def calculate_optimized_values(data, budget, matrix, update_frequency=20):
     """Fill the dynamic programming matrix with optimized values."""
     for i in range(1, len(data) + 1):
         name, action_cost, action_profit = data[i - 1]
@@ -35,6 +39,21 @@ def calculate_optimized_values(data, budget, matrix):
                 matrix[i][current_budget] = max(include_action, exclude_action)
             else:
                 matrix[i][current_budget] = matrix[i - 1][current_budget]
+        
+        # Track memory usage during the calculation
+        current, _ = tracemalloc.get_traced_memory()
+        memory_usage.append(current / 1024)  # Convert to KB
+
+        # Update the live plot every 'update_frequency' iterations
+        if i % update_frequency == 0:
+            plt.cla()  # Clear the plot to redraw
+            plt.plot(memory_usage, label='Memory Usage (KB)')
+            plt.xlabel('Iterations')
+            plt.ylabel('Memory (KB)')
+            plt.title('Live Memory Usage Tracking')
+            plt.legend()
+            plt.pause(0.01)  # Pause to update the plot
+    
     return matrix
 
 def retrieve_selected_actions(data, matrix, budget):
@@ -62,10 +81,15 @@ def knapsack_solver(file_path=FILE_PATH, budget=BUDGET):
     max_profit = matrix[-1][-1]
     return matrix, max_profit, selected_actions
 
+
 if __name__ == "__main__":
 
     # Start measuring memory usage
     tracemalloc.start()
+    
+    # Initialize the live plot
+    plt.ion()  # Turn on interactive mode
+    plt.figure()
 
     # Start measuring time
     start_time = time.time()
@@ -91,3 +115,6 @@ if __name__ == "__main__":
     print(f"\nExecution time: {execution_time:.6f} seconds")
     print(f"\nMemory usage: {current / 1024:.6f} KB")
     print(f"\nPeak memory usage: {peak / 1024:.6f} KB")
+
+    plt.ioff()  # Turn off interactive mode
+    plt.show()
